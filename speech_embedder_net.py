@@ -41,7 +41,7 @@ class GE2ELoss(nn.Module):
         self.device = device
         
     def forward(self, embeddings):
-        torch.clamp(self.w, 1e-6)
+        torch.clamp(self.w, 1e-6) # w가 1e-6 이하인 값을 모두 1e-6으로 설정
         centroids = get_centroids(embeddings)
         cossim = get_cossim(embeddings, centroids)
         sim_matrix = self.w*cossim.to(self.device) + self.b

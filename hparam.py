@@ -3,14 +3,26 @@
 
 import yaml
 
-
+# config.yaml
+# params
+#   - filename : yaml file name
+# return
+#   - hparam dictionary
 def load_hparam(filename):
-    stream = open(filename, 'r')
-    docs = yaml.load_all(stream)
-    hparam_dict = dict()
-    for doc in docs:
-        for k, v in doc.items():
-            hparam_dict[k] = v
+    with open(filename, 'r') as stream:
+        try:
+            # read yaml file
+            docs = yaml.safe_load_all(stream)
+
+            # build dictionary
+            hparam_dict = dict()
+            for doc in docs:
+                for k, v in doc.items():
+                    hparam_dict[k] = v
+        except yaml.YAMLError as exc:
+            print(exc)
+            return None
+
     return hparam_dict
 
 
