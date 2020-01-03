@@ -15,8 +15,11 @@ from torch.utils.data import DataLoader
 from hparam import hparam as hp
 from data_load import SpeakerDatasetTIMIT, SpeakerDatasetTIMITPreprocessed
 from speech_embedder_net import SpeechEmbedder, GE2ELoss, get_centroids, get_cossim
+from logger import Logger
 
 def train(model_path):
+    if hp.train.use_tensorboard:
+        logger = Logger(hp.train.log_dir)
     device = torch.device(hp.device)
     
     if hp.data.data_preprocessed:
@@ -73,6 +76,12 @@ def train(model_path):
                 if hp.train.log_file is not None:
                     with open(hp.train.log_file,'a') as f:
                         f.write(mesg)
+
+                if hp.train.use_tensorboard:
+                    logger.scalar_summary("Loss", loss, iteration)
+                    logger.scalar_summary("Total_loss", total_loss / (batch_id + 1), iteration)
+
+
                     
         if hp.train.checkpoint_dir is not None and (e + 1) % hp.train.checkpoint_interval == 0:
             embedder_net.eval().cpu()

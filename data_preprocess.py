@@ -6,6 +6,7 @@ import os
 import librosa
 import numpy as np
 from hparam import hparam as hp
+from audio import melspectrogram
 
 # downloaded dataset path
 audio_path = glob.glob(hp.unprocessed_data)
@@ -41,6 +42,7 @@ def save_spectrogram_tisv():
                         S = np.abs(S) ** 2
                         mel_basis = librosa.filters.mel(sr=hp.data.sr, n_fft=hp.data.nfft, n_mels=hp.data.nmels)
                         S = np.log10(np.dot(mel_basis, S) + 1e-6)           # log mel spectrogram of utterances
+
                         utterances_spec.append(S[:, :hp.data.tisv_frame])    # first 180 frames of partial utterance
                         utterances_spec.append(S[:, -hp.data.tisv_frame:])   # last 180 frames of partial utterance
 
@@ -68,15 +70,16 @@ def save_spectrogram_voxceleb():
         wavs = glob.glob(os.path.join(spk, "**/*.wav"))
         for wav in wavs:
             utter, sr = librosa.core.load(wav, sr=hp.data.sr)
+            # rescale wav
+            if hp.data.rescaling:  # hparams.rescale = True
+                utter = utter / np.abs(utter).max() * hp.data.rescaling_max
+
             intervals = librosa.effects.split(utter, top_db=30)
             for interval in intervals:
                 if (interval[1] - interval[0]) > utter_min_len:
                     utter_part = utter[interval[0]:interval[1]]
-                    S = librosa.core.stft(y=utter_part, n_fft=hp.data.nfft,
-                                          win_length=int(hp.data.window * sr), hop_length=int(hp.data.hop * sr))
-                    S = np.abs(S) ** 2
-                    mel_basis = librosa.filters.mel(sr=hp.data.sr, n_fft=hp.data.nfft, n_mels=hp.data.nmels)
-                    S = np.log10(np.dot(mel_basis, S) + 1e-6)  # log mel spectrogram of utterances
+                    S = melspectrogram(utter_part, hp)
+
                     utterances_spec.append(S[:, :hp.data.tisv_frame])  # first 180 frames of partial utterance
                     utterances_spec.append(S[:, -hp.data.tisv_frame:])  # last 180 frames of partial utterance
 

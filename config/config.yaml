@@ -1,25 +1,46 @@
 training: !!bool "true"
 device: "cuda"
-unprocessed_data: './TIMIT/*/*/*/*.wav'
+unprocessed_data: '/hd0/dataset/dataset_speaker_verification/*'
 ---
 data:
-    train_path: './train_tisv'
-    train_path_unprocessed: './TIMIT/TRAIN/*/*/*.wav'
-    test_path: './test_tisv'
-    test_path_unprocessed: './TIMIT/TEST/*/*/*.wav'
+    train_path: '/hd0/dataset/speaker_verification/train_mel80'
+    train_path_unprocessed: './voxceleb/TRAIN/*/*/*.wav'
+    test_path: '/hd0/dataset/speaker_verification/test_mel80'
+    test_path_unprocessed: './voxceleb/TEST/*/*/*.wav'
     data_preprocessed: !!bool "true" 
     sr: 16000
-    nfft: 512 #For mel spectrogram preprocess
-    window: 0.025 #(s)
-    hop: 0.01 #(s)
-    nmels: 40 #Number of mel energies
+    nfft: 1024 #For mel spectrogram preprocess
+    window: 0.025 #(s) (25ms)
+    hop: 0.01 #(s) (10ms)
+    win_size: 1024
+    hop_size: 256
+    nmels: 80 #Number of mel energies
     tisv_frame: 180 #Max number of time steps in input after preprocess
+
+    rescaling: !!bool "true"
+    rescaling_max: 0.999
+
+    preemphasize: !!bool "false"
+    preemphasis: 0.97
+
+    fmin: 125
+    fmax: 7600
+
+    min_level_db: -100
+    ref_level_db: 20
+
+    signal_normalization: !!bool "true"
+    allow_clipping_in_normalization: !!bool "true"
+    symmetric_mels: !!bool "true"
+    max_abs_value: 4.
+
+    power: 1.0
 ---   
 model:
     hidden: 768 #Number of LSTM hidden layer units
     num_layer: 3 #Number of LSTM layers
     proj: 256 #Embedding size
-    model_path: './model.model' #Model path for testing, inference, or resuming training
+    model_path: '/hd0/speech_id_checkpoint/final_epoch_950_batch_id_281.model' #Model path for testing, inference, or resuming training
 ---
 train:
     N : 4 #Number of speakers in batch
@@ -28,9 +49,11 @@ train:
     lr: 0.01 
     epochs: 950 #Max training speaker epoch 
     log_interval: 30 #Epochs before printing progress
-    log_file: './speech_id_checkpoint/Stats'
+    log_file: '/hd0/speech_id_checkpoint/Stats'
+    use_tensorboard: !!bool "true"
+    log_dir: '/hd0/speech_id_checkpoint/'
     checkpoint_interval: 120 #Save model after x speaker epochs
-    checkpoint_dir: './speech_id_checkpoint'
+    checkpoint_dir: '/hd0/speech_id_checkpoint'
     restore: !!bool "false" #Resume training from previous model path
 ---
 test:
